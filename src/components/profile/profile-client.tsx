@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Upload, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { CvAutofillDialog } from "@/components/profile/cv-autofill-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -86,6 +88,7 @@ export function ProfileClient({
   initialSkills: UserSkillItemProp[];
   roles: RoleOptionProp[];
 }) {
+  const router = useRouter();
   const [education, setEducation] = useState<EducationItem[]>(
     initialProfile.education
   );
@@ -310,15 +313,13 @@ export function ProfileClient({
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            disabled
-            title="CV auto-fill will be available in an upcoming update"
-          >
-            <Upload className="size-4" />
-            Auto-fill from CV (Coming soon)
-          </Button>
+          <CvAutofillDialog
+            currentEducation={education}
+            currentExperienceLevel={experienceLevel}
+            currentInterests={interests}
+            currentSkillNames={skills.map((s) => s.name)}
+            onApplied={() => router.refresh()}
+          />
         </CardHeader>
 
         <CardContent className="space-y-6">

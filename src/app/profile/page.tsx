@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AskAssistantFab } from "@/components/layout/ask-assistant-fab";
 import { requirePageUser } from "@/server/auth";
 import { db } from "@/server/db";
 import { getProfile, listUserSkills } from "@/server/services/profile";
@@ -57,6 +58,7 @@ export default function ProfilePage() {
       <Suspense fallback={<ProfileSkeleton />}>
         <ProfileContent />
       </Suspense>
+      <AskAssistantFab />
     </section>
   );
 }

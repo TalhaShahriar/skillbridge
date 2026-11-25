@@ -88,3 +88,25 @@ export const AdminRoleSkillUpsertSchema = z.object({
 export const AdminRoleSkillDeleteSchema = z.object({
   skillId: z.string().min(1),
 });
+
+export const IdParamSchema = z.string().trim().min(1).max(64);
+
+export const SearchQueryParamSchema = z.object({
+  q: z.string().trim().max(120).optional(),
+});
+
+export const CvApplySchema = z.object({
+  education: z.array(EducationItemSchema).max(10).default([]),
+  experienceLevel: ExperienceLevelSchema.nullable().optional(),
+  interests: z.array(z.string().trim().min(1).max(60)).max(20).optional(),
+  skills: z
+    .array(
+      z.object({
+        skillId: z.string().min(1),
+        level: SkillLevelSchema.default("BEGINNER"),
+      })
+    )
+    .max(50)
+    .default([]),
+});
+export type CvApplyInput = z.infer<typeof CvApplySchema>;

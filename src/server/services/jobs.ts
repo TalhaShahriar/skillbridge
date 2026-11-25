@@ -23,6 +23,17 @@ export async function listJobs(params: ListJobsParams) {
   const pageSize = Math.min(Math.max(1, params.pageSize ?? 20), 50);
   const q = params.q?.trim();
 
+  if (!process.env.DATABASE_URL) {
+    return {
+      items: [],
+      total: 0,
+      page,
+      pageSize,
+      totalPages: 1,
+      datasetName: getDatasetName(),
+    };
+  }
+
   const where: Prisma.JobWhereInput = {
     ...(params.roleId ? { roleId: params.roleId } : {}),
     ...(params.workMode ? { workMode: params.workMode } : {}),

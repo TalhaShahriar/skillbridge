@@ -23,6 +23,13 @@ type AuthResolution =
   | { status: "authenticated"; user: User };
 
 async function resolveCurrentUser(): Promise<AuthResolution> {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return { status: "unauthenticated", user: null };
+  }
+
   const supabase = await createClient();
   const {
     data: { user: supabaseUser },

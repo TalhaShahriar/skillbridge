@@ -9,8 +9,8 @@ export async function Navbar() {
 
   return (
     <header className="border-b bg-background">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-center gap-6">
+      <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <Link
             href="/"
             className="text-lg font-semibold tracking-tight text-foreground"
@@ -19,13 +19,13 @@ export async function Navbar() {
           </Link>
           <nav
             aria-label="Main navigation"
-            className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground"
+            className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground"
           >
             {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="transition-colors hover:text-foreground"
+                className="whitespace-nowrap transition-colors hover:text-foreground"
               >
                 {item.label}
               </Link>

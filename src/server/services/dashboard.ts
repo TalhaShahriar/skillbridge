@@ -61,6 +61,30 @@ export async function getDashboardData(
   const datasetName = process.env.DATASET_NAME?.trim() || "Job Dataset";
   const datasetUrl = process.env.DATASET_URL?.trim() || null;
 
+  if (!process.env.DATABASE_URL) {
+    return {
+      totals: {
+        jobs: 0,
+        skillsTracked: 0,
+        roles: 0,
+        datasetJobs: 0,
+        manualBdJobs: 0,
+        sampleJobs: 0,
+        datasetName,
+        datasetUrl,
+      },
+      selectedRoleId: null,
+      selectedRoleName: null,
+      scopeJobCount: 0,
+      topSkills: [],
+      jobsByRole: [],
+      workModeSplit: [],
+      levelSplit: [],
+      topSkillsByCategory: [],
+      roles: [],
+    };
+  }
+
   const [
     totalJobs,
     skillsTracked,

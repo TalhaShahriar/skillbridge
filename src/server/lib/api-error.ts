@@ -15,6 +15,13 @@ export function apiErrorResponse(error: unknown): NextResponse {
     );
   }
 
+  if (error instanceof SyntaxError) {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+
   if (error instanceof ProfileServiceError || error instanceof AdminServiceError) {
     return NextResponse.json(
       { error: error.message },

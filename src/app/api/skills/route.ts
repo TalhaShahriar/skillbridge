@@ -1,10 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/server/db";
 import { apiErrorResponse } from "@/server/lib/api-error";
+import { SearchQueryParamSchema } from "@/server/schemas";
 
 export async function GET(request: NextRequest) {
   try {
-    const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+    const { q } = SearchQueryParamSchema.parse({
+      q: request.nextUrl.searchParams.get("q") ?? undefined,
+    });
 
     const skills = await db.skill.findMany({
       where: q

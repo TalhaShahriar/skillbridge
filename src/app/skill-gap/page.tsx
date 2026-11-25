@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AskAssistantFab } from "@/components/layout/ask-assistant-fab";
 import { requirePageUser } from "@/server/auth";
 import { db } from "@/server/db";
 import { getSkillGapForUser } from "@/server/services/analysis";
@@ -50,6 +51,7 @@ export default function SkillGapPage() {
       <Suspense fallback={<SkillGapSkeleton />}>
         <SkillGapContent />
       </Suspense>
+      <AskAssistantFab />
     </section>
   );
 }

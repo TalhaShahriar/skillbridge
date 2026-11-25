@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/server/auth";
 import { apiErrorResponse } from "@/server/lib/api-error";
-import { UpdateSkillLevelSchema } from "@/server/schemas";
+import { IdParamSchema, UpdateSkillLevelSchema } from "@/server/schemas";
 import { updateSkillLevel } from "@/server/services/profile";
 
 export async function PATCH(
@@ -10,7 +10,8 @@ export async function PATCH(
 ) {
   try {
     const user = await requireUser();
-    const { skillId } = await context.params;
+    const { skillId: rawSkillId } = await context.params;
+    const skillId = IdParamSchema.parse(rawSkillId);
     const body = await request.json();
     const parsed = UpdateSkillLevelSchema.parse(body);
     const skill = await updateSkillLevel(user.id, skillId, parsed.level);

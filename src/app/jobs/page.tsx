@@ -30,10 +30,12 @@ async function JobsContent({ searchParams }: JobsPageProps) {
 
   const [jobsData, roles] = await Promise.all([
     listJobs(filters),
-    db.jobRole.findMany({
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
+    process.env.DATABASE_URL
+      ? db.jobRole.findMany({
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
 
   return (

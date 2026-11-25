@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AskAssistantFab } from "@/components/layout/ask-assistant-fab";
 import { requirePageUser } from "@/server/auth";
 import { recommendJobs } from "@/server/services/analysis";
 import { RecommendationsClient } from "@/components/analysis/recommendations-client";
@@ -41,6 +42,7 @@ export default function RecommendationsPage() {
       <Suspense fallback={<RecommendationsSkeleton />}>
         <RecommendationsContent />
       </Suspense>
+      <AskAssistantFab />
     </section>
   );
 }

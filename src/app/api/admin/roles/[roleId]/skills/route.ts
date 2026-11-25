@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/server/auth";
 import { revalidateDashboardCache } from "@/server/cache/dashboard";
 import { apiErrorResponse } from "@/server/lib/api-error";
-import { AdminRoleSkillDeleteSchema } from "@/server/schemas";
+import { AdminRoleSkillDeleteSchema, IdParamSchema } from "@/server/schemas";
 import { removeRoleSkill, upsertRoleSkill } from "@/server/services/admin";
 
 export async function PUT(
@@ -11,7 +11,8 @@ export async function PUT(
 ) {
   try {
     await requireAdmin();
-    const { roleId } = await context.params;
+    const { roleId: rawRoleId } = await context.params;
+    const roleId = IdParamSchema.parse(rawRoleId);
     const body = await request.json();
     const roleSkill = await upsertRoleSkill(roleId, body);
     revalidateDashboardCache();
@@ -27,7 +28,8 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin();
-    const { roleId } = await context.params;
+    const { roleId: rawRoleId } = await context.params;
+    const roleId = IdParamSchema.parse(rawRoleId);
     const body = await request.json();
     const { skillId } = AdminRoleSkillDeleteSchema.parse(body);
     const result = await removeRoleSkill(roleId, skillId);
