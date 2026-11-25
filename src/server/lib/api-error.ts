@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { handleAuthError } from "@/server/auth";
+import { AdminServiceError } from "@/server/services/admin";
 import { ProfileServiceError } from "@/server/services/profile";
 
 export function apiErrorResponse(error: unknown): NextResponse {
@@ -14,7 +15,7 @@ export function apiErrorResponse(error: unknown): NextResponse {
     );
   }
 
-  if (error instanceof ProfileServiceError) {
+  if (error instanceof ProfileServiceError || error instanceof AdminServiceError) {
     return NextResponse.json(
       { error: error.message },
       { status: error.status }

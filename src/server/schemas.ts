@@ -53,3 +53,38 @@ export const RemoveSkillsInputSchema = z.object({
 export const SetTargetRoleSchema = z.object({
   roleId: z.string().min(1).nullable(),
 });
+
+export const WorkModeSchema = z.enum(["ONSITE", "REMOTE", "HYBRID", "UNKNOWN"]);
+export type WorkModeInput = z.infer<typeof WorkModeSchema>;
+
+export const JobsQuerySchema = z.object({
+  q: z.string().trim().max(120).optional(),
+  roleId: z.string().min(1).optional(),
+  workMode: WorkModeSchema.optional(),
+  level: ExperienceLevelSchema.optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type JobsQueryInput = z.infer<typeof JobsQuerySchema>;
+
+export const AdminUserPatchSchema = z
+  .object({
+    blocked: z.boolean().optional(),
+    role: z.enum(["STUDENT", "ADMIN"]).optional(),
+  })
+  .refine((v) => v.blocked !== undefined || v.role !== undefined, {
+    message: "Provide blocked or role",
+  });
+
+export const AdminJobRolePatchSchema = z.object({
+  roleId: z.string().min(1),
+});
+
+export const AdminRoleSkillUpsertSchema = z.object({
+  skillId: z.string().min(1),
+  weight: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+});
+
+export const AdminRoleSkillDeleteSchema = z.object({
+  skillId: z.string().min(1),
+});
