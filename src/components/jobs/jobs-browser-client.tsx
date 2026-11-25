@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -57,11 +58,26 @@ const LEVEL_OPTIONS = [
   { value: "UNKNOWN", label: "Unspecified" },
 ];
 
+// UNKNOWN is intentionally omitted so cards don't show "Unspecified" noise.
+const WORK_MODE_LABEL: Record<string, string> = {
+  REMOTE: "Remote",
+  HYBRID: "Hybrid",
+  ONSITE: "On-site",
+};
+
+const LEVEL_LABEL: Record<string, string> = {
+  INTERN: "Intern",
+  ENTRY: "Entry / Junior",
+  MID: "Mid-level",
+  SENIOR: "Senior / Lead",
+};
+
 export function JobsBrowserClient({
   items,
   total,
   page,
   totalPages,
+  pageSize,
   datasetName,
   roles,
   initialFilters,
@@ -70,6 +86,7 @@ export function JobsBrowserClient({
   total: number;
   page: number;
   totalPages: number;
+  pageSize: number;
   datasetName: string;
   roles: RoleOption[];
   initialFilters: {
@@ -82,6 +99,13 @@ export function JobsBrowserClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [queryInput, setQueryInput] = useState(initialFilters.q);
+  const [isPending, startTransition] = useTransition();
+
+  function navigate(qs: string) {
+    startTransition(() => {
+      router.replace(qs ? `/jobs?${qs}` : "/jobs");
+    });
+  }
 
   useEffect(() => {
     const trimmed = queryInput.trim();
@@ -97,7 +121,9 @@ export function JobsBrowserClient({
       }
       next.delete("page");
       const qs = next.toString();
-      router.replace(qs ? `/jobs?${qs}` : "/jobs");
+      startTransition(() => {
+        router.replace(qs ? `/jobs?${qs}` : "/jobs");
+      });
     }, 300);
 
     return () => clearTimeout(timer);
@@ -113,13 +139,12 @@ export function JobsBrowserClient({
     if (key !== "page") {
       next.delete("page");
     }
-    const qs = next.toString();
-    router.replace(qs ? `/jobs?${qs}` : "/jobs");
+    navigate(next.toString());
   }
 
   function clearAllFilters() {
     setQueryInput("");
-    router.replace("/jobs");
+    navigate("");
   }
 
   const hasFilters =
@@ -128,12 +153,26 @@ export function JobsBrowserClient({
     Boolean(initialFilters.workMode) ||
     Boolean(initialFilters.level);
 
+  const rangeStart = (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(rangeStart + items.length - 1, total);
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-[1fr_200px_170px_170px]">
+      <form
+        role="search"
+        aria-label="Filter jobs"
+        onSubmit={(e) => e.preventDefault()}
+        className="grid gap-3 md:grid-cols-[1fr_200px_170px_170px]"
+      >
         <div className="relative">
+          <Label htmlFor="jobs-search" className="sr-only">
+            Search jobs
+          </Label>
           <Search className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
           <Input
+            id="jobs-search"
+            type="search"
+            maxLength={120}
             placeholder="Search title, company, or skill (e.g. React, SQL)..."
             className="pl-8"
             value={queryInput}
@@ -145,7 +184,7 @@ export function JobsBrowserClient({
           value={initialFilters.roleId || "all"}
           onValueChange={(val) => updateFilter("roleId", val ?? "all")}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" aria-label="Role">
             <SelectValue placeholder="All roles" />
           </SelectTrigger>
           <SelectContent>
@@ -162,7 +201,7 @@ export function JobsBrowserClient({
           value={initialFilters.workMode || "all"}
           onValueChange={(val) => updateFilter("workMode", val ?? "all")}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" aria-label="Work mode">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -178,7 +217,7 @@ export function JobsBrowserClient({
           value={initialFilters.level || "all"}
           onValueChange={(val) => updateFilter("level", val ?? "all")}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full" aria-label="Experience level">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -189,12 +228,22 @@ export function JobsBrowserClient({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </form>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-        <span>
-          Showing {items.length} of {total} job{total === 1 ? "" : "s"}
-        </span>
+        <div>
+          <p role="status" aria-live="polite">
+            {isPending
+              ? "Updating results…"
+              : items.length === 0
+                ? "0 jobs"
+                : `Showing ${rangeStart}–${rangeEnd} of ${total} job${total === 1 ? "" : "s"}`}
+          </p>
+          <p className="text-xs">
+            Source: {datasetName} · {total} posting{total === 1 ? "" : "s"}{" "}
+            {hasFilters ? "match these filters" : "in this dataset"}
+          </p>
+        </div>
         {hasFilters && (
           <Button
             type="button"
@@ -211,15 +260,37 @@ export function JobsBrowserClient({
       {items.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>No jobs found</CardTitle>
+            <CardTitle>
+              {total > 0 ? "This page is out of range" : "No jobs found"}
+            </CardTitle>
             <CardDescription>
-              Try adjusting your search or filters, or check back after jobs are
-              imported.
+              {total > 0
+                ? `There ${totalPages === 1 ? "is only 1 page" : `are only ${totalPages} pages`} of results.`
+                : hasFilters
+                  ? "No postings match these filters. Try a broader search or clear the filters."
+                  : "No jobs have been imported yet."}
             </CardDescription>
           </CardHeader>
+          {(total > 0 || hasFilters) && (
+            <CardContent>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={
+                  total > 0 ? () => updateFilter("page", "1") : clearAllFilters
+                }
+              >
+                {total > 0 ? "Go to first page" : "Clear filters"}
+              </Button>
+            </CardContent>
+          )}
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div
+          className={`space-y-4 transition-opacity ${isPending ? "opacity-60" : ""}`}
+          aria-busy={isPending}
+        >
           {items.map((job) => (
             <Card key={job.id}>
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -234,15 +305,14 @@ export function JobsBrowserClient({
                     {job.role && (
                       <Badge variant="secondary">{job.role.name}</Badge>
                     )}
-                    {job.source === "sample" && (
-                      <Badge variant="outline">Sample</Badge>
-                    )}
-                    {job.source === "manual-bd" && (
-                      <Badge variant="outline">manual-bd</Badge>
-                    )}
                   </div>
                   <CardDescription>
-                    {[job.company, job.location, job.workMode, job.level]
+                    {[
+                      job.company,
+                      job.location,
+                      WORK_MODE_LABEL[job.workMode],
+                      LEVEL_LABEL[job.level],
+                    ]
                       .filter(Boolean)
                       .join(" · ")}
                   </CardDescription>
@@ -253,7 +323,10 @@ export function JobsBrowserClient({
               </CardHeader>
 
               {job.skills.length > 0 && (
-                <CardContent className="flex flex-wrap gap-1.5">
+                <CardContent
+                  className="flex flex-wrap gap-1.5"
+                  aria-label="Extracted skills"
+                >
                   {job.skills.slice(0, 12).map((skill) => (
                     <Badge key={skill.id} variant="outline">
                       {skill.name}
@@ -272,12 +345,15 @@ export function JobsBrowserClient({
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t pt-4">
+        <nav
+          aria-label="Pagination"
+          className="flex items-center justify-between border-t pt-4"
+        >
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={page <= 1}
+            disabled={page <= 1 || isPending}
             onClick={() => updateFilter("page", String(page - 1))}
           >
             Previous
@@ -289,12 +365,12 @@ export function JobsBrowserClient({
             type="button"
             variant="outline"
             size="sm"
-            disabled={page >= totalPages}
+            disabled={page >= totalPages || isPending}
             onClick={() => updateFilter("page", String(page + 1))}
           >
             Next
           </Button>
-        </div>
+        </nav>
       )}
     </div>
   );

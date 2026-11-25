@@ -44,6 +44,7 @@ async function JobsContent({ searchParams }: JobsPageProps) {
       total={jobsData.total}
       page={jobsData.page}
       totalPages={jobsData.totalPages}
+      pageSize={jobsData.pageSize}
       datasetName={jobsData.datasetName}
       roles={roles}
       initialFilters={{
