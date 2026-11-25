@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum WorkMode {
+  ONSITE
+  REMOTE
+  HYBRID
+  UNKNOWN
+}
+
+enum ExperienceLevel {
+  INTERN
+  ENTRY
+  MID
+  SENIOR
+  UNKNOWN
+}
+
+model User {
+  id        String         @id @default(cuid())
+  authId    String         @unique
+  email     String         @unique
+  name      String?
+  avatarUrl String?
+  role      Role           @default(STUDENT)
+  blocked   Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  profile   Profile?
+  skills    UserSkill[]
+  logs      AssistantLog[]
+}
+
+model Profile {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  education       Json?
+  experienceLevel ExperienceLevel?
+  interests       String[]
+  targetRoleId    String?
+  targetRole      JobRole?         @relation(fields: [targetRoleId], references: [id], onDelete: SetNull)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Skill {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  category  String
+  createdAt DateTime     @default(now())
+  aliases   SkillAlias[]
+  users     UserSkill[]
+  roles     RoleSkill[]
+  jobs      JobSkill[]
+}
+
+model SkillAlias {
+  id      String @id @default(cuid())
+  alias   String @unique
+  skillId String
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+}
+
+model UserSkill {
+  userId    String
+  skillId   String
+  level     SkillLevel @default(BEGINNER)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill     Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+}
+
+model JobRole {
+  id            String      @id @default(cuid())
+  name          String      @unique
+  slug          String      @unique
+  description   String?
+  titleKeywords String[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  profiles      Profile[]
+  skills        RoleSkill[]
+  jobs          Job[]
+}
+
+model RoleSkill {
+  roleId  String
+  skillId String
+  weight  Int
+  role    JobRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  skill   Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, skillId])
+}
+
+model Job {
+  id             String          @id @default(cuid())
+  title          String
+  company        String?
+  location       String?
+  workMode       WorkMode        @default(UNKNOWN)
+  level          ExperienceLevel @default(UNKNOWN)
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String?
+  description    String
+  postedAt       DateTime?
+  source         String
+  sourceUrl      String?
+  externalId     String?
+  roleId         String?
+  role           JobRole?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  roleOverridden Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  skills         JobSkill[]
+
+  @@unique([source, externalId])
+  @@index([roleId])
+  @@index([postedAt])
+}
+
+model JobSkill {
+  jobId   String
+  skillId String
+  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, skillId])
+  @@index([skillId])
+}
+
+model AssistantLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  input     String
+  action    String?
+  status    String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

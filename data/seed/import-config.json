@@ -1,0 +1,15 @@
+{
+  "title": "title",
+  "company": "company",
+  "location": "location",
+  "description": "description",
+  "skills": "skills",
+  "salaryMin": "salary_min",
+  "salaryMax": "salary_max",
+  "salaryCurrency": "salary_currency",
+  "workMode": "work_mode",
+  "level": "level",
+  "postedAt": "posted_at",
+  "sourceUrl": "url",
+  "externalId": "id"
+}
